@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FileCard } from "@/components";
-import { Search, Plus, Upload, Siren, GraduationCap, User, CheckCircle, Clock, AlertTriangle, Info, Download, FileText } from "lucide-react";
-import { fetchAssets, requestFile, uploadAsset } from "@/controller/file.controller";
+import { Search, Plus, Upload, Siren, GraduationCap, User, CheckCircle, Clock, AlertTriangle, Info, Download, FileText, Save } from "lucide-react";
+import { fetchAssets, requestFile, uploadAsset, updateAsset } from "@/controller/file.controller";
 import { jwtDecode } from "jwt-decode";
 import placeholder from '@/assets/images/placeholder.jpg';
 
@@ -17,6 +17,14 @@ export default function Home() {
         category: 'Docs',
         description: '',
         file: null
+    });
+
+    // Form states untuk Edit
+    const [editForm, setEditForm] = useState({
+        id: '',
+        name: '',
+        category: 'Docs',
+        description: ''
     });
 
     // Form states untuk Report
@@ -77,6 +85,10 @@ export default function Home() {
 
     const handleUploadSubmit = async (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Upload submit triggered'); // Debug log
+        console.log('Form data:', uploadForm); // Debug log
         
         if (!isLoggedIn) {
             alert('Anda harus login terlebih dahulu!');
@@ -88,46 +100,43 @@ export default function Home() {
             return;
         }
         
-        if (userRole === 'guru') {
-            // Guru langsung upload ke /api/upload (tanpa verifikasi)
-            const formData = new FormData();
-            formData.append('name', uploadForm.name);
-            formData.append('category', uploadForm.category);
-            formData.append('description', uploadForm.description);
-            formData.append('file', uploadForm.file);
+        try {
+            if (userRole === 'guru') {
+                console.log('Uploading as Guru...'); // Debug log
+                // Guru langsung upload ke /api/upload (tanpa verifikasi)
+                const formData = new FormData();
+                formData.append('name', uploadForm.name);
+                formData.append('category', uploadForm.category);
+                formData.append('description', uploadForm.description);
+                formData.append('file', uploadForm.file);
 
-            try {
                 const res = await uploadAsset(formData);
                 console.log('Upload response:', res);
                 alert('File berhasil diupload langsung!');
                 document.getElementById('file_upload').close();
                 setUploadForm({ name: '', category: 'Docs', description: '', file: null });
                 loadAssets(); // Reload data
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert('Gagal mengupload file: ' + (error.response?.data?.error || error.message));
-            }
-        } else if (userRole === 'siswa') {
-            // Siswa harus melalui verifikasi - kirim request ke /api/requests
-            const requestData = new FormData();
-            requestData.append('type', 'upload');
-            requestData.append('name', uploadForm.name);
-            requestData.append('category', uploadForm.category);
-            requestData.append('description', uploadForm.description);
-            requestData.append('message', `Siswa meminta persetujuan untuk upload file: ${uploadForm.name}`);
-            requestData.append('file', uploadForm.file);
+            } else if (userRole === 'siswa') {
+                console.log('Uploading as Siswa...'); // Debug log
+                // Siswa harus melalui verifikasi - kirim request ke /api/requests
+                const requestData = new FormData();
+                requestData.append('type', 'upload');
+                requestData.append('name', uploadForm.name);
+                requestData.append('category', uploadForm.category);
+                requestData.append('description', uploadForm.description);
+                requestData.append('message', `Siswa meminta persetujuan untuk upload file: ${uploadForm.name}`);
+                requestData.append('file', uploadForm.file);
 
-            try {
                 await requestFile(requestData);
                 alert('Permintaan upload berhasil dikirim!\n\nFile Anda sedang menunggu persetujuan dari admin.\nAnda akan diberitahu setelah file disetujui.');
                 document.getElementById('file_upload').close();
                 setUploadForm({ name: '', category: 'Docs', description: '', file: null });
-            } catch (error) {
-                console.error('Request error:', error);
-                alert('Gagal mengirim permintaan: ' + (error.response?.data?.error || error.message));
+            } else {
+                alert('Anda harus login sebagai Guru atau Siswa untuk mengupload file!');
             }
-        } else {
-            alert('Anda harus login sebagai Guru atau Siswa untuk mengupload file!');
+        } catch (error) {
+            console.error('Upload/Request error:', error);
+            alert('Gagal: ' + (error.response?.data?.error || error.message || 'Terjadi kesalahan'));
         }
     };
 
@@ -139,6 +148,7 @@ export default function Home() {
 
     const handleReportSubmit = async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         
         if (!isLoggedIn) {
             alert('Anda harus login terlebih dahulu!');
@@ -150,12 +160,12 @@ export default function Home() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('type', 'update');
-        formData.append('targetAssetId', reportForm.assetId);
-        formData.append('message', `[${reportForm.title}] ${reportForm.description}`);
-
         try {
+            const formData = new FormData();
+            formData.append('type', 'update');
+            formData.append('targetAssetId', reportForm.assetId);
+            formData.append('message', `[${reportForm.title}] ${reportForm.description}`);
+
             await requestFile(formData);
             if (userRole === 'siswa') {
                 alert('Laporan berhasil dikirim!\n\nLaporan Anda sedang menunggu peninjauan dari admin.');
@@ -173,8 +183,56 @@ export default function Home() {
     // Handle Search
     const handleSearch = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         setCurrentPage(1);
         loadAssets();
+    };
+
+    // Handle Edit
+    const handleEditClick = (asset) => {
+        setEditForm({
+            id: asset._id,
+            name: asset.name,
+            category: asset.category,
+            description: asset.description
+        });
+        document.getElementById('file_edit').showModal();
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm({ ...editForm, [name]: value });
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!editForm.name) {
+            alert('Nama file harus diisi!');
+            return;
+        }
+
+        try {
+            await updateAsset(editForm.id, {
+                name: editForm.name,
+                category: editForm.category,
+                description: editForm.description
+            });
+            alert('File berhasil diupdate!');
+            document.getElementById('file_edit').close();
+            setEditForm({ id: '', name: '', category: 'Docs', description: '' });
+            loadAssets();
+        } catch (error) {
+            console.error('Update error:', error);
+            alert('Gagal mengupdate file: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    // Handle Delete
+    const handleDeleteSuccess = (deletedId) => {
+        // Remove deleted asset from state
+        setAssets(assets.filter(asset => asset._id !== deletedId));
     };
 
     return (
@@ -206,6 +264,8 @@ export default function Home() {
                             asset={asset}
                             sendToParent={handleFromChild}
                             onDetailClick={() => setSelectedAsset(asset)}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteSuccess}
                         />
                     ))
                 ) : (
@@ -223,13 +283,21 @@ export default function Home() {
                 </div>
                 <div>
                     Unggah
-                    <button className="btn btn-xl btn-circle" onClick={() => document.getElementById('file_upload').showModal()}>
+                    <button 
+                        type="button"
+                        className="btn btn-xl btn-circle" 
+                        onClick={() => document.getElementById('file_upload').showModal()}
+                    >
                         <Upload size={24} />
                     </button>
                 </div>
                 <div>
                     Lapor
-                    <button className="btn btn-xl btn-circle btn-alert" onClick={() => document.getElementById('file_report').showModal()}>
+                    <button 
+                        type="button"
+                        className="btn btn-xl btn-circle btn-alert" 
+                        onClick={() => document.getElementById('file_report').showModal()}
+                    >
                         <Siren size={24} />
                     </button>
                 </div>
@@ -356,10 +424,12 @@ export default function Home() {
                                             <button className="btn btn-ghost">Tutup</button>
                                         </form>
                                         <button 
+                                            type="button"
                                             className={`btn ${isLoggedIn ? "btn-primary" : "btn-disabled"} gap-2`}
                                             onClick={() => {
                                                 if (isLoggedIn && selectedAsset) {
-                                                    window.location.href = `${import.meta.env.VITE_API_URL}/download/${selectedAsset.filename}`;
+                                                    const downloadUrl = `${import.meta.env.VITE_API_URL}/download/${selectedAsset.filename}?role=${userRole}`;
+                                                    window.location.href = downloadUrl;
                                                 }
                                             }}
                                             disabled={!isLoggedIn}
@@ -400,7 +470,7 @@ export default function Home() {
                         )}
                     </div>
                     
-                    <form onSubmit={handleUploadSubmit}>
+                    <form onSubmit={handleUploadSubmit} encType="multipart/form-data">
                         <fieldset className="fieldset bg-base-200 border-base-300 rounded-box border p-4">
                             <legend className="fieldset-legend">Deskripsi & Upload File</legend>
 
@@ -565,6 +635,75 @@ export default function Home() {
                                     <span className="text-sm">Laporan akan dikirim ke admin untuk ditindaklanjuti.</span>
                                 </div>
                             )}
+                        </fieldset>
+                    </form>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                    <button>close</button>
+                </form>
+            </dialog>
+
+            {/* Modal Edit - Only for Guru */}
+            <dialog id="file_edit" className="modal">
+                <div className="modal-box">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold">Edit File</h2>
+                        <div className="badge badge-lg badge-warning gap-2">
+                            <GraduationCap size={16} />
+                            Guru Only
+                        </div>
+                    </div>
+                    
+                    <form onSubmit={handleEditSubmit} encType="multipart/form-data">
+                        <fieldset className="fieldset bg-base-200 border-base-300 rounded-box border p-4">
+                            <legend className="fieldset-legend">Edit Informasi File</legend>
+
+                            <label className="label">Nama File</label>
+                            <input 
+                                type="text" 
+                                name="name"
+                                className="input w-full" 
+                                placeholder="Masukkan Nama File"
+                                value={editForm.name}
+                                onChange={handleEditChange}
+                                required
+                            />
+
+                            <label className="label">Jenis File</label>
+                            <select 
+                                name="category"
+                                className="select w-full"
+                                value={editForm.category}
+                                onChange={handleEditChange}
+                            >
+                                <option value="Docs">Docs</option>
+                                <option value="ISO">ISO</option>
+                                <option value="Apps">Apps</option>
+                                <option value="Foto">Foto</option>
+                                <option value="Video">Video</option>
+                            </select> 
+
+                            <label className="label">Deskripsi</label>
+                            <textarea 
+                                name="description"
+                                className="textarea h-24 w-full" 
+                                placeholder="Deskripsi file disini"
+                                value={editForm.description}
+                                onChange={handleEditChange}
+                            />
+
+                            <div className="alert alert-warning mt-2">
+                                <AlertTriangle size={20} className="shrink-0" />
+                                <span className="text-sm">File asli tidak akan berubah, hanya informasi yang diupdate.</span>
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                className="btn btn-warning btn-block mt-4 gap-2"
+                            >
+                                <Save size={18} />
+                                Simpan Perubahan
+                            </button>
                         </fieldset>
                     </form>
                 </div>
