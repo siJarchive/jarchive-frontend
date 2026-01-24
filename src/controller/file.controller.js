@@ -2,6 +2,8 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const token = localStorage.getItem('token');
+
 const fetchAssets = async (pageNum = 1, search, category, sort) => {
     try {
         const res = await axios.get(`${API_URL}/api/assets`, {
@@ -64,7 +66,11 @@ const requestFile = async (formData) => {
 
 const fetchRequests = async () => {
     try {
-        const res = await axios.get(`${API_URL}/api/requests`);
+        const res = await axios.get(`${API_URL}/api/requests`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
         return res.data;
     } catch (error) {
         throw error;
