@@ -31,6 +31,8 @@ export default function RequestPage() {
             await approveRequest(id);
             alert('Permintaan berhasil disetujui!');
             loadRequests();
+            // Trigger sidebar refresh by dispatching custom event
+            window.dispatchEvent(new Event('refreshSidebarBadges'));
         } catch (error) {
             console.error('Error approving request:', error);
             alert('Gagal menyetujui permintaan');
@@ -44,6 +46,8 @@ export default function RequestPage() {
             await rejectRequest(id);
             alert('Permintaan berhasil ditolak!');
             loadRequests();
+            // Trigger sidebar refresh by dispatching custom event
+            window.dispatchEvent(new Event('refreshSidebarBadges'));
         } catch (error) {
             console.error('Error rejecting request:', error);
             alert('Gagal menolak permintaan');
