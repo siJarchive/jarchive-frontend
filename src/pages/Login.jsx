@@ -21,7 +21,7 @@ export default function Login() {
         <div className="hero min-h-screen bg-base-200">
             <div className="hero-content flex-col lg:flex-row">
                 <div className="text-center lg:text-left">
-                    <h1 className="text-5xl font-bold">Login to Jarchive</h1>
+                    <h1 className="text-5xl font-bold">Login ke Jarchive</h1>
                     <p className="py-6">
                         Dengan login, anda bisa mengunduh dan mengupload file tanpa batas!
                     </p>
