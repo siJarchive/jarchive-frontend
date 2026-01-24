@@ -1,17 +1,31 @@
-import { House, Bell, Activity, ArrowUpDown, LogOut, PanelLeft, TriangleAlert } from "lucide-react"
-import { NavLink } from "react-router-dom"
+import { House, Activity, Inbox, LogOut, PanelLeft, Lock } from "lucide-react";
+import { useMemo } from "react";
+import { NavLink } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
+    const token = localStorage.getItem('token');
+    const decode = useMemo(() => {
+        if (!token) return null;
+        try {
+            return jwtDecode(token);
+        } catch {
+            return null;
+        }
+    }, [token]);
+    const role = decode?.role;
+
     const dashboardList = [
         {label: "Home", path: "/", icon: <House />},
-        {label: "Notifikasi", path: "/notification", icon: <Bell />},
-        {label: "Laporkan File", path: "/report", icon: <TriangleAlert />},
     ]
 
     const adminList = [
-        {label: "Catatan", path: "/admin/logs", icon: <Activity />},
-        {label: "Permintaan", path: "/admin/requests", icon: <ArrowUpDown />},
+        {label: "Catatan", path: "/admin/logs", icon: <Activity />, adminOnly: true},
+        {label: "Permintaan", path: "/admin/requests", icon: <Inbox />, adminOnly: true},
     ]
+
+    // Check if user is admin/guru
+    const isAdmin = role === 'guru';
 
     return (
         <div className="drawer-side is-drawer-close:overflow-visible">
@@ -37,26 +51,42 @@ export default function Sidebar() {
                                 </NavLink>
                             </li>
                         ))}
+                        
                         <li className="menu-title is-drawer-close:hidden">Teacher Section</li>
                         {adminList.map(item => (
                             <li key={item.path}>
-                                <NavLink
-                                    to={item.path}
-                                    className={({ isActive }) => `justify-start btn is-drawer-close:flex is-drawer-close:tooltip is-drawer-close:tooltip-right ${isActive ? "btn-primary" : "btn-ghost"}`}
-                                    data-tip={item.label}
-                                >
-                                    {item.icon}<span className="is-drawer-close:hidden">{item.label}</span>
-                                </NavLink>
+                                {isAdmin ? (
+                                    <NavLink
+                                        to={item.path}
+                                        className={({ isActive }) => `justify-start btn ${isActive ? "btn-primary" : "btn-ghost"} is-drawer-close:flex is-drawer-close:tooltip is-drawer-close:tooltip-right`}
+                                        data-tip={item.label}
+                                    >
+                                        {item.icon}<span className="is-drawer-close:hidden">{item.label}</span>
+                                    </NavLink>
+                                ) : (
+                                    <button
+                                        className="justify-start btn btn-disabled is-drawer-close:flex is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                                        data-tip={role ? "Hanya untuk Guru" : "Login sebagai Guru"}
+                                        disabled
+                                    >
+                                        <Lock size={20} className="opacity-50" />
+                                        <span className="is-drawer-close:hidden opacity-50">{item.label}</span>
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>
                 </div>
                 {localStorage.length > 0 && (
                     <div className="border-t border-base-content/15 py-2 flex justify-center">
-                        <button className="btn btn-block btn-soft btn-error justify-start is-drawer-close:justify-start is-drawer-close:flex is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:w-fit" data-tip="Logout" onClick={() => {
-                            localStorage.removeItem('token');
-                            window.location.reload();
-                        }}>
+                        <button 
+                            className="btn btn-block btn-soft btn-error justify-start is-drawer-close:justify-start is-drawer-close:flex is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:w-fit" 
+                            data-tip="Logout" 
+                            onClick={() => {
+                                localStorage.removeItem('token');
+                                window.location.reload();
+                            }}
+                        >
                             <LogOut size={24} />
                             <span className="is-drawer-close:hidden">Logout</span>
                         </button>
