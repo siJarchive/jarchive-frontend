@@ -14,7 +14,6 @@ export default function Header() {
         }
     }, [token]);
     const role = decode?.role;
-    console.log(role);
     
     const roleTheme = {
         siswa: 'badge-accent',
