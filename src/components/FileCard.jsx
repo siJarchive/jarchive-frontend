@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { File, FileText, Image, Video, HardDrive, Package } from 'lucide-react';
+import { File, FileText, Image, Video, HardDrive, Package, Edit, Trash2 } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
+import { deleteAsset } from "@/controller/file.controller";
 
-export default function FileCard({ asset, sendToParent, onDetailClick }) {
+export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, onDelete }) {
     const [canDownload, setCanDownload] = useState(false);
+    const [userRole, setUserRole] = useState(null);
 
     const btnStyle = {
         true: "btn-primary",
@@ -23,16 +25,20 @@ export default function FileCard({ asset, sendToParent, onDetailClick }) {
     useEffect(() => {
         if (decode?.role == undefined) {
             setCanDownload(false);
+            setUserRole(null);
             sendToParent(false);
         } else {
             setCanDownload(true);
+            setUserRole(decode.role);
             sendToParent(true);
         }
     }, [decode, sendToParent]);
 
     const handleDownload = () => {
         if (canDownload) {
-            window.location.href = `${import.meta.env.VITE_API_URL}/download/${asset.filename}`;
+            // Add query parameter to track who downloaded
+            const downloadUrl = `${import.meta.env.VITE_API_URL}/download/${asset.filename}?role=${userRole}`;
+            window.location.href = downloadUrl;
         }
     };
 
@@ -41,6 +47,29 @@ export default function FileCard({ asset, sendToParent, onDetailClick }) {
             onDetailClick(asset);
         }
         document.getElementById('file_details').showModal();
+    };
+
+    const handleEdit = () => {
+        if (onEdit) {
+            onEdit(asset);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm(`Apakah Anda yakin ingin menghapus file "${asset.name}"?\n\nAksi ini tidak dapat dibatalkan!`)) {
+            return;
+        }
+
+        try {
+            await deleteAsset(asset._id);
+            alert('File berhasil dihapus!');
+            if (onDelete) {
+                onDelete(asset._id);
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Gagal menghapus file: ' + (error.response?.data?.error || error.message));
+        }
     };
 
     // Function to get icon based on category
@@ -79,10 +108,32 @@ export default function FileCard({ asset, sendToParent, onDetailClick }) {
         }
     };
 
+    const isGuru = userRole === 'guru';
+
     return (
         <div className="card bg-base-100 w-64 shadow-sm hover:shadow-lg transition-shadow">
-            <figure className={`h-32 ${getCategoryBgColor()} flex items-center justify-center`}>
+            <figure className={`h-32 ${getCategoryBgColor()} flex items-center justify-center relative`}>
                 {getCategoryIcon()}
+                
+                {/* Admin Actions - Top Right Corner */}
+                {isGuru && (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                        <button
+                            className="btn btn-circle btn-sm btn-warning"
+                            onClick={handleEdit}
+                            title="Edit File"
+                        >
+                            <Edit size={14} />
+                        </button>
+                        <button
+                            className="btn btn-circle btn-sm btn-error"
+                            onClick={handleDelete}
+                            title="Hapus File"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                )}
             </figure>
             <div className="card-body">
                 <h2 className="card-title text-base truncate" title={asset.name}>
