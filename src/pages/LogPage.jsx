@@ -9,11 +9,14 @@ export default function LogPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
 
+    const token = localStorage.getItem('token');
+
     const loadLogs = async () => {
         try {
             setLoading(true);
             const res = await axios.get(`${API_URL}/api/logs`);
             setLogs(res.data);
+            console.log(res);
         } catch (error) {
             console.error('Error fetching logs:', error);
             alert('Gagal memuat data log');
@@ -26,7 +29,12 @@ export default function LogPage() {
         if (!confirm('Apakah Anda yakin ingin menghapus semua log? Aksi ini tidak dapat dibatalkan!')) return;
 
         try {
-            await axios.delete(`${API_URL}/api/logs`);
+            await axios.delete(`${API_URL}/api/logs`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            
             alert('Semua log berhasil dihapus!');
             loadLogs();
         } catch (error) {
