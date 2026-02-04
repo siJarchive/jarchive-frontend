@@ -36,7 +36,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
 
     const handleDownload = () => {
         if (canDownload) {
-            // Add query parameter to track who downloaded
+            // Query parameter untuk track siapa yang download
             const downloadUrl = `${import.meta.env.VITE_API_URL}/download/${asset.filename}?role=${userRole}`;
             window.location.href = downloadUrl;
         }
@@ -72,7 +72,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
         }
     };
 
-    // Function to get icon based on category
+    // Function untuk memunculkan icon berdasarkan kategori file
     const getCategoryIcon = () => {
         switch(asset.category) {
             case 'Foto':
@@ -90,7 +90,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
         }
     };
 
-    // Function to get background color based on category
+    // Fungsi untuk mengubah warna bg berdasarkan kategori
     const getCategoryBgColor = () => {
         switch(asset.category) {
             case 'Foto':
@@ -115,7 +115,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
             <figure className={`h-32 ${getCategoryBgColor()} flex items-center justify-center relative`}>
                 {getCategoryIcon()}
                 
-                {/* Admin Actions - Top Right Corner */}
+                {/* Aksi Admin - Hapus dan Edit */}
                 {isGuru && (
                     <div className="absolute top-2 right-2 flex gap-1">
                         <button
