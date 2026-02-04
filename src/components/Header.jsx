@@ -36,9 +36,9 @@ export default function Header() {
                 <p className="badge badge-outline badge-primary hidden sm:block">by Kelompok 2 | XII SIJA A</p>
             </div>
             <div className="navbar-end">
-                {localStorage.length > 0 ? (
+                {localStorage?.length > 0 && decode?.role != undefined ? (
                     <p className={`badge badge-soft ${roleTheme[role]} text-lg font-semibold`}>
-                        {role.toUpperCase()}
+                        {role?.toUpperCase()}
                     </p>
                 ) : (
                     <a className="btn btn-primary" onClick={() => navigate('/login')}>
