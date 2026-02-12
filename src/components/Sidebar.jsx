@@ -16,7 +16,7 @@ export default function Sidebar() {
     const role = decode?.role;
 
     const dashboardList = [
-        {label: "Home", path: "/", icon: <House />},
+        {label: "Home", path: "/dashboard", icon: <House />},
     ]
 
     const adminList = [
