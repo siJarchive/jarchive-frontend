@@ -1,8 +1,9 @@
 import { Github, TextAlignStart } from 'lucide-react';
-import logoSIJA from '@/assets/images/logo-sija.jpg';
-import { Outlet } from 'react-router-dom';
+import logoSIJA from '@/assets/images/logo_sija.png';
+import { useNavigate, Outlet } from 'react-router-dom';
 
 export default function HomeLayout() {
+    const navigate = useNavigate();
     return (
         <>
             <header className='navbar bg-base-100 shadow-sm sticky top-0 z-50'>
