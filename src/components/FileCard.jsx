@@ -115,7 +115,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
             <figure className={`h-32 ${getCategoryBgColor()} flex items-center justify-center relative`}>
                 {getCategoryIcon()}
                 
-                {/* Aksi Admin - Hapus dan Edit */}
+                {/* Aksi Admin - Hapus + Edit */}
                 {isGuru && (
                     <div className="absolute top-2 right-2 flex gap-1">
                         <button
