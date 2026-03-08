@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { FileCard } from "@/components";
-import { Search, Plus, Upload, Siren, GraduationCap, User, CheckCircle, Clock, AlertTriangle, Info, Download, FileText, Save, CloudUpload, X, FilePenLine, History } from "lucide-react";
-import { fetchAssets, requestFile, uploadAsset, updateAsset } from "@/controller/file.controller";
+import { Search, Plus, Upload, Siren, GraduationCap, User, CheckCircle, Clock, AlertTriangle, Info, Download, FileText, Save, CloudUpload, X, FilePenLine, History, Trash2 } from "lucide-react";
+import { fetchAssets, requestFile, uploadAsset, updateAsset, deleteVersion } from "@/controller/file.controller";
 import { jwtDecode } from "jwt-decode";
 import placeholder from '@/assets/images/placeholder.jpg';
 
@@ -11,6 +11,7 @@ export default function Dashboard() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [selectedVersion, setSelectedVersion] = useState(null);
     
     // State Progress & UX
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -59,6 +60,8 @@ export default function Dashboard() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterCategory, setFilterCategory] = useState('');
+    const [sortOption, setSortOption] = useState('newest');
 
     const handleFromChild = (data) => setIsLoggedIn(data);
 
@@ -77,7 +80,7 @@ export default function Dashboard() {
 
     const loadAssets = async () => {
         try {
-            const res = await fetchAssets(currentPage, searchQuery);
+            const res = await fetchAssets(currentPage, searchQuery, filterCategory, sortOption);
             setAssets(res.assets || []);
         } catch (error) { 
             console.error('Error:', error); 
@@ -87,7 +90,7 @@ export default function Dashboard() {
 
     useEffect(() => { 
         loadAssets(); 
-    }, [currentPage, searchQuery]);
+    }, [currentPage, searchQuery, filterCategory, sortOption]);
 
     // --- GENERIC FILE HANDLERS (Drag & Drop) ---
     const handleDragOver = (e) => { 
@@ -317,34 +320,77 @@ export default function Dashboard() {
         }
     };
 
+    // --- HELPER DELETE VERSION ---
+    const handleDeleteVersion = async (versionId) => {
+        if (!confirm('Hapus riwayat versi ini secara permanen?')) return;
+        
+        try {
+            await deleteVersion(selectedAsset._id, versionId);
+            alert('Versi berhasil dihapus');
+            
+            // Refresh data aset yang sedang dipilih agar tabel terupdate
+            const updatedAssets = await fetchAssets(currentPage, searchQuery);
+            setAssets(updatedAssets.assets || []);
+            
+            // Update selectedAsset agar modal detail juga berubah
+            const newSelected = updatedAssets.assets.find(a => a._id === selectedAsset._id);
+            setSelectedAsset(newSelected);
+        } catch (error) {
+            alert('Gagal hapus versi');
+        }
+    };
+
     return (
         <div className="py-4">
-             {/* Search Bar */}
-             <form 
-                className="w-full flex justify-end" 
-                onSubmit={(e) => { 
-                    e.preventDefault(); 
-                    setCurrentPage(1); 
-                    loadAssets(); 
-                }}
-            >
-                <div className="join">
-                    <div className="input">
-                        <span className="label">
+            {/* Bar Pencarian & Filter */}
+            <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                
+                {/* Kiri: Search Bar */}
+                <form onSubmit={(e) => { e.preventDefault(); setCurrentPage(1); loadAssets(); }} className="w-full md:w-auto">
+                    <div className="join w-full">
+                        <div className="input join-item flex items-center gap-2 w-full md:w-auto">
                             <Search size={16} />
-                        </span>
-                        <input 
-                            type="text" 
-                            className="join-item" 
-                            placeholder="Cari file" 
-                            value={searchQuery} 
-                            onChange={(e) => setSearchQuery(e.target.value)} 
-                        />
-                    </div>
-                    <button type="submit" className="btn btn-primary join-item">Cari</button>
-                </div> 
-            </form>
-            <hr className="my-2" />
+                            <input 
+                                type="text" 
+                                placeholder="Cari file" 
+                                value={searchQuery} 
+                                onChange={(e) => setSearchQuery(e.target.value)} 
+                                className="w-full"
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary join-item">Cari</button>
+                    </div> 
+                </form>
+
+                {/* Kanan: Filter Kategori & Sorting */}
+                <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
+                    <select 
+                        className="select select-bordered" 
+                        value={filterCategory} 
+                        onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+                    >
+                        <option value="">Semua Kategori</option>
+                        <option value="Docs">Docs</option>
+                        <option value="ISO">ISO</option>
+                        <option value="Apps">Apps</option>
+                        <option value="Foto">Foto</option>
+                        <option value="Video">Video</option>
+                    </select>
+
+                    <select 
+                        className="select select-bordered" 
+                        value={sortOption} 
+                        onChange={(e) => { setSortOption(e.target.value); setCurrentPage(1); }}
+                    >
+                        <option value="newest">Terbaru - Terlama</option>
+                        <option value="oldest">Terlama - Terbaru</option>
+                        <option value="size_desc">Ukuran (Terbesar)</option>
+                        <option value="size_asc">Ukuran (Terkecil)</option>
+                    </select>
+                </div>
+
+            </div>
+            <hr className="my-4 border-base-300" />
             
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-x-8 justify-items-center">
                 {assets.length > 0 ? (
@@ -460,7 +506,17 @@ export default function Dashboard() {
                             </div>
                             
                             {isUploading && (
-                                <progress className="progress progress-primary w-full mt-4" value={uploadProgress} max="100"></progress>
+                                <div className="flex items-center gap-2 mt-4">
+                                    <progress className="progress progress-primary flex-1" value={uploadProgress} max="100"></progress>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-circle btn-xs btn-error" 
+                                        onClick={handleCancelUpload}
+                                        title="Batalkan Upload"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
                             )}
                             
                             <button className="btn btn-primary btn-block mt-4" disabled={isUploading || !uploadForm.file}>
@@ -536,8 +592,18 @@ export default function Dashboard() {
                             </div>
                             
                             {isUploading && (
-                                <progress className="progress progress-warning w-full mt-4" value={uploadProgress} max="100"></progress>
-                            )}
+                                <div className="flex items-center gap-2 mt-4">
+                                    <progress className="progress progress-warning flex-1" value={uploadProgress} max="100"></progress>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-circle btn-xs btn-error" 
+                                        onClick={handleCancelUpload}
+                                        title="Batalkan Update"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+)}
                             
                             <button className="btn btn-warning btn-block mt-4" disabled={isUploading}>
                                 Simpan Perubahan
@@ -624,9 +690,19 @@ export default function Dashboard() {
                                 disabled={isUploading}
                             />
                             
-                            {isUploading && (
-                                <progress className="progress progress-info w-full mt-4" value={uploadProgress} max="100"></progress>
-                            )}
+                        {isUploading && (
+                            <div className="flex items-center gap-2 mt-4">
+                                <progress className="progress progress-info flex-1" value={uploadProgress} max="100"></progress>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-circle btn-xs btn-error" 
+                                    onClick={handleCancelUpload}
+                                    title="Batalkan Pengiriman"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
                             
                             <button className="btn btn-info btn-block mt-4" disabled={isUploading}>
                                 {isUploading ? (
@@ -684,7 +760,7 @@ export default function Dashboard() {
                                       !selectedAsset.filename?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|pdf)$/i)) && (
                                         <div className="flex flex-col items-center justify-center h-full w-full">
                                             <FileText size={100} className="text-primary mb-4" />
-                                            <p className="text-xl font-semibold text-center px-8 break-words max-w-md">
+                                            <p className="text-xl font-semibold text-center px-8 warp-break-words max-w-md">
                                                 {selectedAsset.originalName || selectedAsset.filename}
                                             </p>
                                             <p className="text-base text-gray-500 mt-2">
@@ -759,18 +835,46 @@ export default function Dashboard() {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {[...selectedAsset.versions].reverse().map((ver, index) => (
-                                                                <tr key={index}>
-                                                                    <td className="font-bold">v{ver.versionNumber}</td>
-                                                                    <td>{new Date(ver.uploadDate).toLocaleDateString('id-ID')}</td>
-                                                                    <td className="text-right">
+                                                            {selectedAsset.versions?.sort((a,b) => b.versionNumber - a.versionNumber).map((v) => (
+                                                                <tr key={v._id}>
+                                                                    <td>v{v.versionNumber}</td>
+                                                                    <td>{new Date(v.uploadDate).toLocaleDateString('id-ID')}</td>
+                                                                    <td className="text-right flex justify-end gap-1">
+                                                                        
+                                                                        {/* 1. Tombol Detail */}
                                                                         <button 
+                                                                            type="button"
+                                                                            className="btn btn-ghost btn-xs text-info"
+                                                                            onClick={() => {
+                                                                                setSelectedVersion(v);
+                                                                                document.getElementById('version_details').showModal();
+                                                                            }}
+                                                                            title="Detail Versi"
+                                                                        >
+                                                                            <Info size={14} />
+                                                                        </button>
+
+                                                                        {/* 2. Tombol Download */}
+                                                                        <button 
+                                                                            type="button"
                                                                             className="btn btn-ghost btn-xs text-primary"
-                                                                            onClick={() => handleDownloadVersion(ver.filename, selectedAsset.originalName)}
-                                                                            title={`Download v${ver.versionNumber}`}
+                                                                            onClick={() => handleDownloadVersion(v.filename, selectedAsset.originalName)}
+                                                                            title="Download Versi"
                                                                         >
                                                                             <Download size={14} />
                                                                         </button>
+                                                                        
+                                                                        {/* 3. Tombol Delete (Khusus Guru) */}
+                                                                        {userRole === 'guru' && (
+                                                                            <button 
+                                                                                type="button"
+                                                                                className="btn btn-ghost btn-xs text-error"
+                                                                                onClick={() => handleDeleteVersion(v._id)}
+                                                                                title="Hapus Versi"
+                                                                            >
+                                                                                <Trash2 size={14} />
+                                                                            </button>
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                             ))}
@@ -789,6 +893,72 @@ export default function Dashboard() {
                                 </div>
                             </>
                         )}
+                    </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                    <button>close</button>
+                </form>
+            </dialog>
+
+            {/* Modal Detail Versi Khusus */}
+            <dialog id="version_details" className="modal">
+                <div className="modal-box">
+                    <h3 className="font-bold text-lg mb-4">
+                        Detail Versi {selectedVersion?.versionNumber}
+                    </h3>
+                    
+                    {selectedVersion && selectedAsset && (
+                        <div className="space-y-4 text-sm">
+                            {/* Area Preview Versi Lama */}
+                            <div className="bg-base-200 p-2 rounded-lg flex justify-center items-center h-48 relative overflow-hidden border border-base-300">
+                                {selectedAsset.category === 'Foto' || selectedVersion.filename?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) ? (
+                                    <img 
+                                        src={`${import.meta.env.VITE_API_URL}/uploads/${selectedVersion.filename}`} 
+                                        className="h-full w-full object-contain"
+                                        onError={(e) => { e.target.src = placeholder; }}
+                                        alt={`Preview v${selectedVersion.versionNumber}`}
+                                    />
+                                ) : selectedAsset.category === 'Video' ? (
+                                    <video controls className="w-full h-full object-contain" src={`${import.meta.env.VITE_API_URL}/stream/${selectedVersion.filename}`}>
+                                        Browser Anda tidak mendukung video.
+                                    </video>
+                                ) : (
+                                    <div className="text-center">
+                                        <FileText size={48} className="text-primary mx-auto mb-2" />
+                                        <p className="opacity-50">Preview tidak tersedia</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Informasi Versi */}
+                            <div className="grid grid-cols-2 gap-3 bg-base-200/50 p-4 rounded-lg">
+                                <div className="col-span-2">
+                                    <span className="font-bold block text-xs opacity-70 uppercase tracking-wider mb-1">Nama Sistem (Filename)</span>
+                                    <span className="font-mono text-xs break-all bg-base-300 px-2 py-1 rounded">{selectedVersion.filename}</span>
+                                </div>
+                                <div>
+                                    <span className="font-bold block text-xs opacity-70 uppercase tracking-wider mb-1">Ukuran</span>
+                                    <span className="font-semibold">{selectedVersion.size}</span>
+                                </div>
+                                <div>
+                                    <span className="font-bold block text-xs opacity-70 uppercase tracking-wider mb-1">Tanggal Diunggah</span>
+                                    <span className="font-semibold">{new Date(selectedVersion.uploadDate).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+
+                            <button 
+                                className="btn btn-primary btn-sm w-full mt-2"
+                                onClick={() => handleDownloadVersion(selectedVersion.filename, selectedAsset.originalName)}
+                            >
+                                <Download size={16} /> Download Versi Ini
+                            </button>
+                        </div>
+                    )}
+                    
+                    <div className="modal-action mt-6 pt-4 border-t border-base-200">
+                        <form method="dialog">
+                            <button className="btn btn-sm btn-ghost">Tutup</button>
+                        </form>
                     </div>
                 </div>
                 <form method="dialog" className="modal-backdrop">

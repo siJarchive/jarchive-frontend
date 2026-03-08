@@ -132,7 +132,36 @@ const downloadFileBlob = async (filename, role, onProgress, signal) => {
     }
 };
 
+const deleteVersion = async (assetId, versionId) => {
+    try {
+        const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/assets/${assetId}/versions/${versionId}`);
+        return res.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const clearRequests = async () => {
+    try {
+        const res = await axios.delete(`${API_URL}/api/requests`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export {
-    fetchAssets, uploadAsset, updateAsset, deleteAsset, requestFile,
-    fetchRequests, approveRequest, rejectRequest, downloadFileBlob
+    fetchAssets, 
+    uploadAsset, 
+    updateAsset, 
+    deleteAsset, 
+    requestFile,
+    fetchRequests, 
+    approveRequest, 
+    rejectRequest, 
+    downloadFileBlob,
+    deleteVersion,
+    clearRequests
 }

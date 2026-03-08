@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchRequests, approveRequest, rejectRequest } from "@/controller/file.controller";
-import { CheckCircle, XCircle, FileText, Upload, AlertCircle, Eye } from "lucide-react";
+import { fetchRequests, approveRequest, rejectRequest, clearRequest } from "@/controller/file.controller";
+import { CheckCircle, XCircle, FileText, Upload, AlertCircle, Eye, Trash2 } from "lucide-react";
 
 export default function RequestPage() {
     const [requests, setRequests] = useState([]);
@@ -54,6 +54,21 @@ export default function RequestPage() {
         }
     };
 
+    const handleClearRequests = async () => {
+        if (!confirm('Apakah Anda yakin ingin menghapus semua permintaan? Aksi ini tidak dapat dibatalkan!')) return;
+
+        try {
+            await clearRequests();
+            alert('Semua permintaan berhasil dihapus!');
+            loadRequests();
+            // Trigger sidebar refresh
+            window.dispatchEvent(new Event('refreshSidebarBadges'));
+        } catch (error) {
+            console.error('Error clearing requests:', error);
+            alert('Gagal menghapus semua permintaan');
+        }
+    };
+
     const getStatusBadge = (status) => {
         const badges = {
             pending: 'badge-warning',
@@ -80,16 +95,26 @@ export default function RequestPage() {
     };
 
     return (
-        <div className="py-4 px-2 md:px-0">
-            <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold">Kelola Permintaan</h1>
-                <button 
-                    className="btn btn-primary btn-sm w-full md:w-auto"
-                    onClick={loadRequests}
-                >
-                    Refresh
-                </button>
-            </div>
+            <div className="py-4 px-2 md:px-0">
+                <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                    <h1 className="text-2xl md:text-3xl font-bold">Kelola Permintaan</h1>
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <button 
+                            className="btn btn-primary btn-sm flex-1 md:flex-none"
+                            onClick={loadRequests}
+                        >
+                            Refresh
+                        </button>
+                        <button 
+                            className="btn btn-error btn-sm flex-1 md:flex-none gap-1"
+                            onClick={handleClearRequests}
+                            disabled={requests.length === 0 || loading}
+                        >
+                            <Trash2 size={16} className="hidden md:inline" />
+                            <span className="md:inline">Hapus Semua</span>
+                        </button>
+                    </div>
+                </div>
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">

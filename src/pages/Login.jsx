@@ -1,21 +1,58 @@
 import { userLogin } from "@/controller/user.controller";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function Login() {
     const navigate = useNavigate();
     
+    // State untuk mengontrol status error dan sukses
+    const [status, setStatus] = useState({
+        username: { type: "", message: "" }, // type bisa "error" atau "success"
+        password: { type: "", message: "" }
+    });
+
     async function handleLogin(e) {
         e.preventDefault();
         const username = e.target.username.value;
         const password = e.target.password.value;
+
         try {
             const res = await userLogin({ username, password });
+            
+            // Jika berhasil, ubah border dan teks jadi hijau
+            setStatus({
+                username: { type: "success", message: "Username benar" },
+                password: { type: "success", message: "Password benar" }
+            });
+
             localStorage.setItem("token", res.data.token);
-            navigate('/dashboard');
+            
+            // Tunggu sebentar agar user bisa melihat warna hijau sebelum pindah
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 500);
+
         } catch (error) {
+            // Jika gagal (biasanya error 401 atau 400 dari backend)
             console.log(error);
+            setStatus({
+                username: { type: "error", message: "Username mungkin salah" },
+                password: { type: "error", message: "Password salah atau tidak cocok" }
+            });
         }
     }
+
+    // Helper function untuk menentukan class border
+    const getBorderClass = (field) => {
+        if (status[field].type === "error") return "border-error focus:border-error border-2";
+        if (status[field].type === "success") return "border-success focus:border-success border-2";
+        return "";
+    };
+
+    // Helper function untuk menentukan class teks
+    const getTextClass = (field) => {
+        return status[field].type === "error" ? "text-error" : "text-success";
+    };
 
     return (
         <div className="hero min-h-screen bg-base-200">
@@ -30,17 +67,41 @@ export default function Login() {
                     <div className="card-body">
                         <form className="fieldset" onSubmit={ handleLogin }>
                             <label className="label">Username</label>
-                            <input name="username" type="text" className="input validator" placeholder="Username" required />
-                            <span className="validator-hint hidden m-0">Username wajib diisi!</span>
-                            <label className="label">Password</label>
-                            <input name="password" type="password" className="input validator" placeholder="Password" required />
-                            <span className="validator-hint hidden m-0">Password tidak boleh kosong!</span>
-                            <div><a className="link link-hover">Lupa Password?</a></div>
+                            <input 
+                                name="username" 
+                                type="text" 
+                                className={`input ${getBorderClass('username')}`} 
+                                placeholder="Username" 
+                                required 
+                            />
+                            {/* Pesan Peringatan */}
+                            {status.username.message && (
+                                <span className={`text-xs mt-1 ml-1 font-medium ${getTextClass('username')}`}>
+                                    {status.username.message}
+                                </span>
+                            )}
+
+                            <label className="label mt-2">Password</label>
+                            <input 
+                                name="password" 
+                                type="password" 
+                                className={`input ${getBorderClass('password')}`} 
+                                placeholder="Password" 
+                                required 
+                            />
+                            {/* Pesan Peringatan */}
+                            {status.password.message && (
+                                <span className={`text-xs mt-1 ml-1 font-medium ${getTextClass('password')}`}>
+                                    {status.password.message}
+                                </span>
+                            )}
+
+                            <div className="mt-2"><a className="link link-hover text-sm">Lupa Password?</a></div>
                             <button className="btn btn-primary mt-4" type="submit">Login</button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
