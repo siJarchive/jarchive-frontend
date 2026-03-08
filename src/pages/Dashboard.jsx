@@ -347,17 +347,23 @@ export default function Dashboard() {
             <hr className="my-2" />
             
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-x-8 justify-items-center">
-                {assets.map((asset) => (
-                    <FileCard 
-                        key={asset._id} 
-                        asset={asset} 
-                        sendToParent={handleFromChild} 
-                        onDetailClick={() => setSelectedAsset(asset)}
-                        onEdit={handleEditClick}
-                        onUpdateRequest={handleUpdateRequestClick}
-                        onDelete={(id) => setAssets(assets.filter(a => a._id !== id))} 
-                    />
-                ))}
+                {assets.length > 0 ? (
+                    assets.map((asset) => (
+                        <FileCard 
+                            key={asset._id} 
+                            asset={asset} 
+                            sendToParent={handleFromChild} 
+                            onDetailClick={() => setSelectedAsset(asset)}
+                            onEdit={handleEditClick}
+                            onUpdateRequest={handleUpdateRequestClick}
+                            onDelete={(id) => setAssets(assets.filter(a => a._id !== id))} 
+                        />
+                    ))
+                ) : (
+                    <div className="col-span-full text-center text-gray-500">
+                        <p>Tidak ada file tersedia</p>
+                    </div>
+                )}
             </div>
 
             {/* FAB */}
