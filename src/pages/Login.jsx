@@ -32,13 +32,26 @@ export default function Login() {
                 navigate('/dashboard');
             }, 500);
 
-        } catch (error) {
-            // Jika gagal (biasanya error 401 atau 400 dari backend)
+            } catch (error) {
             console.log(error);
-            setStatus({
-                username: { type: "error", message: "Username mungkin salah" },
-                password: { type: "error", message: "Password salah atau tidak cocok" }
-            });
+            
+            // 1. Ambil pesan error dari backend (jika ada)
+            const backendErrorMsg = error.response?.data?.error || "Terjadi kesalahan pada server";
+
+            // 2. Cek apakah error karena Rate Limiter (Status 429)
+            if (error.response?.status === 429) {
+                setStatus({
+                    // Tampilkan pesan limit di bawah input
+                    username: { type: "error", message: backendErrorMsg },
+                    password: { type: "error", message: "Coba lagi setelah 5 menit" }
+                });
+            } else {
+                // 3. Error login biasa (Status 401 atau 400)
+                setStatus({
+                    username: { type: "error", message: "Username salah atau tidak cocok" },
+                    password: { type: "error", message: "Password salah atau tidak cocok" }
+                });
+            }
         }
     }
 
@@ -96,7 +109,6 @@ export default function Login() {
                                 </span>
                             )}
 
-                            <div className="mt-2"><a className="link link-hover text-sm">Lupa Password?</a></div>
                             <button className="btn btn-primary mt-4" type="submit">Login</button>
                         </form>
                     </div>
