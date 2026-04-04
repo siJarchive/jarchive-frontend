@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Upload, Trash2, CheckCircle, RotateCcw, Activity, Filter } from "lucide-react";
+import { Download, Upload, Trash2, CheckCircle, RotateCcw, Activity, Filter, AlertCircle } from "lucide-react";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -77,6 +77,8 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                 return <CheckCircle size={18} className="text-success" />;
             case 'reset':
                 return <RotateCcw size={18} className="text-warning" />;
+            case 'update':
+                return <AlertCircle size={18} className="text-warning" />;
             default:
                 return <Activity size={18} className="text-base-content" />;
         }
@@ -88,7 +90,8 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
             download: 'badge-info',
             delete: 'badge-error',
             approve: 'badge-success',
-            reset: 'badge-warning'
+            reset: 'badge-warning',
+            update: 'badge-warning'
         };
         return badges[action] || 'badge-ghost';
     };
@@ -191,6 +194,12 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                             onClick={() => handleFilterChange('approve')}
                         >
                             Approve
+                        </button>
+                        <button 
+                            className={`btn btn-sm ${filter === 'update' ? 'btn-warning' : 'btn-ghost'}`}
+                            onClick={() => handleFilterChange('update')}
+                        >
+                            Update
                         </button>
                     </div>
 

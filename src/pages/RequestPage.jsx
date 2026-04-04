@@ -1,17 +1,39 @@
 import { useEffect, useState } from "react";
-import { fetchRequests, approveRequest, rejectRequest, clearRequest } from "@/controller/file.controller";
+import { fetchRequests, approveRequest, rejectRequest, clearRequests } from "@/controller/file.controller";
 import { CheckCircle, XCircle, FileText, Upload, AlertCircle, Eye, Trash2 } from "lucide-react";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function RequestPage() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
-    const loadRequests = async () => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRequestsCount, setTotalRequestsCount] = useState(0);
+    const [filter, setFilter] = useState('all');
+    const [requestStats, setRequestStats] = useState({});
+
+    const loadRequests = async (page = 1, currentStatus = 'all') => {
         try {
             setLoading(true);
-            const data = await fetchRequests();
-            setRequests(data);
+            
+            // 1. Fetch data paginasi
+            const res = await axios.get(`${API_URL}/api/requests`, {
+                params: { page: page, limit: 20, status: currentStatus }
+            });
+            
+            setRequests(res.data.requests);
+            setCurrentPage(res.data.currentPage);
+            setTotalPages(res.data.totalPages);
+            setTotalRequestsCount(res.data.totalRequests);
+
+            // 2. Fetch data statistik
+            const statsRes = await axios.get(`${API_URL}/api/requests/stats`);
+            setRequestStats(statsRes.data);
+
         } catch (error) {
             console.error('Error fetching requests:', error);
             alert('Gagal memuat data permintaan');
@@ -21,8 +43,13 @@ export default function RequestPage() {
     };
 
     useEffect(() => {
-        loadRequests();
-    }, []);
+        loadRequests(currentPage, filter);
+    }, [currentPage, filter]);
+
+    const handleFilterChange = (newFilter) => {
+        setFilter(newFilter);
+        setCurrentPage(1);
+    };
 
     const handleApprove = async (id) => {
         if (!confirm('Apakah Anda yakin ingin menyetujui permintaan ini?')) return;
@@ -96,12 +123,13 @@ export default function RequestPage() {
 
     return (
             <div className="py-4 px-2 md:px-0">
+                {/* Header & Tombol Aksi Utama */}
                 <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <h1 className="text-2xl md:text-3xl font-bold">Kelola Permintaan</h1>
                     <div className="flex gap-2 w-full md:w-auto">
                         <button 
                             className="btn btn-primary btn-sm flex-1 md:flex-none"
-                            onClick={loadRequests}
+                            onClick={() => loadRequests(currentPage, filter)}
                         >
                             Refresh
                         </button>
@@ -114,6 +142,22 @@ export default function RequestPage() {
                             <span className="md:inline">Hapus Semua</span>
                         </button>
                     </div>
+                </div>
+
+                {/* Stats Card */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4">
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Total</div><div className="stat-value text-xl text-primary">{totalRequestsCount}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Pending</div><div className="stat-value text-xl text-warning">{requestStats.pending || 0}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Approved</div><div className="stat-value text-xl text-success">{requestStats.approved || 0}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Rejected</div><div className="stat-value text-xl text-error">{requestStats.rejected || 0}</div></div></div>
+                </div>
+
+                {/* Filter Buttons */}
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => handleFilterChange('all')}>Semua</button>
+                    <button className={`btn btn-sm ${filter === 'pending' ? 'btn-warning' : 'btn-ghost'}`} onClick={() => handleFilterChange('pending')}>Pending</button>
+                    <button className={`btn btn-sm ${filter === 'approved' ? 'btn-success' : 'btn-ghost'}`} onClick={() => handleFilterChange('approved')}>Approved</button>
+                    <button className={`btn btn-sm ${filter === 'rejected' ? 'btn-error' : 'btn-ghost'}`} onClick={() => handleFilterChange('rejected')}>Rejected</button>
                 </div>
 
             {loading ? (
@@ -308,6 +352,16 @@ export default function RequestPage() {
                         </table>
                     </div>
                 </>
+            )}
+
+            {requests.length > 0 && (
+                <div className="flex flex-col items-center mt-6 mb-4">
+                    <div className="join">
+                        <button className="join-item btn btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>«</button>
+                        <button className="join-item btn btn-sm pointer-events-none">Page {currentPage} of {totalPages}</button>
+                        <button className="join-item btn btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>»</button>
+                    </div>
+                </div>
             )}
 
             {/* Modal Detail Request */}
