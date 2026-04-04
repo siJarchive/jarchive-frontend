@@ -1,13 +1,13 @@
 import MainLayouts from "@/layouts/MainLayouts";
 import HomeLayouts from "@/layouts/HomeLayouts";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { 
-  HomePage, Dashboard, Login, LogPage, RequestPage
-} from "@/pages/index";
+import { HomePage, Dashboard, Login, LogPage, RequestPage } from "@/pages/index";
+import { Toaster } from "react-hot-toast"; // <-- 1. Import Toaster
 
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" reverseOrder={false} /> 
       <Routes>
         <Route element={<HomeLayouts />} >
           <Route path="/" element={<HomePage />} />

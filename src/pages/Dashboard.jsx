@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { FileCard } from "@/components";
 import { Search, Plus, Upload, Siren, GraduationCap, User, CheckCircle, Clock, AlertTriangle, Info, Download, FileText, Save, CloudUpload, X, FilePenLine, History, Trash2 } from "lucide-react";
 import { fetchAssets, requestFile, uploadAsset, updateAsset, deleteVersion } from "@/controller/file.controller";
@@ -84,7 +85,7 @@ export default function Dashboard() {
             setAssets(res.assets || []);
         } catch (error) { 
             console.error('Error:', error); 
-            alert('Gagal memuat data'); 
+            toast.error('Gagal memuat data'); 
         }
     };
 
@@ -136,8 +137,8 @@ export default function Dashboard() {
     
     const handleUploadSubmit = async (e) => {
         e.preventDefault();
-        if (!isLoggedIn) return alert('Login dulu!');
-        if (!uploadForm.name || !uploadForm.file) return alert('Data tidak lengkap!');
+        if (!isLoggedIn) return toast.error('Login dulu!');
+        if (!uploadForm.name || !uploadForm.file) return toast.error('Data tidak lengkap!');
 
         setUploadProgress(0); 
         setIsUploading(true);
@@ -156,7 +157,7 @@ export default function Dashboard() {
                     (p) => setUploadProgress(p), 
                     abortController.current.signal
                 );
-                alert('Berhasil upload!');
+                toast.success('Berhasil upload!');
                 document.getElementById('file_upload').close();
                 setUploadForm({ name: '', category: 'Docs', description: '', file: null });
                 loadAssets();
@@ -168,13 +169,13 @@ export default function Dashboard() {
                     (p) => setUploadProgress(p), 
                     abortController.current.signal
                 );
-                alert('Request upload terkirim!');
+                toast.success('Request upload terkirim!');
                 document.getElementById('file_upload').close();
                 setUploadForm({ name: '', category: 'Docs', description: '', file: null });
             }
         } catch (error) {
             if (!axios.isCancel(error)) {
-                alert('Gagal upload: ' + (error.response?.data?.error || error.message));
+                toast.error('Gagal upload: ' + (error.response?.data?.error || error.message));
             }
         } finally { 
             setIsUploading(false); 
@@ -196,7 +197,7 @@ export default function Dashboard() {
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
-        if (!editForm.name) return alert('Nama file harus diisi!');
+        if (!editForm.name) return toast.error('Nama file harus diisi!');
         
         setUploadProgress(0); 
         setIsUploading(true);
@@ -219,12 +220,12 @@ export default function Dashboard() {
                 abortController.current.signal
             );
             
-            alert('File berhasil diupdate!');
+            toast.success('File berhasil diupdate!');
             document.getElementById('file_edit').close();
             loadAssets();
         } catch (error) {
              if (!axios.isCancel(error)) {
-                 alert('Gagal update: ' + error.message);
+                 toast.error('Gagal update: ' + error.message);
              }
         } finally { 
             setIsUploading(false); 
@@ -247,7 +248,7 @@ export default function Dashboard() {
 
     const handleReqUpdateSubmit = async (e) => {
         e.preventDefault();
-        if (!reqUpdateForm.message) return alert('Wajib isi pesan laporan update!');
+        if (!reqUpdateForm.message) return toast.error('Wajib isi pesan laporan update!');
         
         setUploadProgress(0); 
         setIsUploading(true);
@@ -272,11 +273,11 @@ export default function Dashboard() {
                 abortController.current.signal
             );
             
-            alert('Permintaan update dikirim! Menunggu persetujuan.');
+            toast.success('Permintaan update dikirim! Menunggu persetujuan.');
             document.getElementById('file_update_request').close();
         } catch (error) {
              if (!axios.isCancel(error)) {
-                 alert('Gagal request update: ' + error.message);
+                 toast.error('Gagal request update: ' + error.message);
              }
         } finally { 
             setIsUploading(false); 
@@ -295,16 +296,16 @@ export default function Dashboard() {
             
             await requestFile(formData);
             
-            alert('Laporan terkirim!');
+            toast.success('Laporan terkirim!');
             document.getElementById('file_report').close();
         } catch (error) { 
-            alert('Gagal lapor'); 
+            toast.error('Gagal lapor'); 
         }
     };
 
     // --- HELPER DOWNLOAD VERSION ---
     const handleDownloadVersion = async (versionFilename, originalName) => {
-        if (!isLoggedIn) return alert("Silakan login untuk mendownload.");
+        if (!isLoggedIn) return toast.error("Silakan login untuk mendownload.");
         
         try {
             const downloadUrl = `${import.meta.env.VITE_API_URL}/download/${versionFilename}?role=${userRole}`;
@@ -316,7 +317,7 @@ export default function Dashboard() {
             link.remove();
         } catch (error) {
             console.error("Download version error:", error);
-            alert("Gagal mendownload versi ini.");
+            toast.error("Gagal mendownload versi ini.");
         }
     };
 
@@ -326,7 +327,7 @@ export default function Dashboard() {
         
         try {
             await deleteVersion(selectedAsset._id, versionId);
-            alert('Versi berhasil dihapus');
+            toast.success('Versi berhasil dihapus');
             
             // Refresh data aset yang sedang dipilih agar tabel terupdate
             const updatedAssets = await fetchAssets(currentPage, searchQuery);
@@ -336,7 +337,7 @@ export default function Dashboard() {
             const newSelected = updatedAssets.assets.find(a => a._id === selectedAsset._id);
             setSelectedAsset(newSelected);
         } catch (error) {
-            alert('Gagal hapus versi');
+            toast.error('Gagal hapus versi');
         }
     };
 

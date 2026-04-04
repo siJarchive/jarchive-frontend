@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, Upload, Trash2, CheckCircle, RotateCcw, Activity, Filter, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -32,7 +33,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
 
         } catch (error) {
             console.error('Error fetching logs:', error);
-            alert('Gagal memuat data log');
+            toast.error('Gagal memuat data log');
         } finally {
             setLoading(false);
         }
@@ -48,11 +49,11 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                 },
             });
             
-            alert('Semua log berhasil dihapus!');
+            toast.success('Semua log berhasil dihapus!');
             loadLogs();
         } catch (error) {
             console.error('Error clearing logs:', error);
-            alert('Gagal menghapus log');
+            toast.error('Gagal menghapus log');
         }
     };
 
@@ -223,19 +224,20 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
             </div>
 
             {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <span className="loading loading-spinner loading-lg"></span>
+                <div className="flex flex-col gap-4 w-full mt-4">
+                    <div className="skeleton h-24 w-full"></div>
+                    <div className="skeleton h-24 w-full"></div>
+                    <div className="skeleton h-24 w-full"></div>
                 </div>
             ) : (
                 <>
                     {/* Mobile: Card View */}
                     <div className="md:hidden space-y-2">
                         {logs.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                {filter === 'all' 
-                                    ? 'Tidak ada log aktivitas'
-                                    : `Tidak ada log untuk aksi "${filter}"`
-                                }
+                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-base-100 rounded-box shadow-sm">
+                                <Activity size={48} className="mb-2 opacity-50" />
+                                <h3 className="text-lg font-bold text-base-content">Log aktivitas Kosong</h3>
+                                <p className="text-xs">Belum ada log aktivitas untuk ditampilkan.</p>
                             </div>
                         ) : (
                             logs.map((log, index) => (
@@ -276,18 +278,18 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                             <tbody>
                                 {logs.length === 0 ? (
                                     <tr>
-                                        <td colSpan="4" className="text-center py-8 text-gray-500">
-                                            {filter === 'all' 
-                                                ? 'Tidak ada log aktivitas'
-                                                : `Tidak ada log untuk aksi "${filter}"`
-                                            }
+                                        <td colSpan="7" className="text-center py-12 text-gray-400">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <Activity size={48} className="mb-2 opacity-50" />
+                                                <h3 className="text-lg font-bold text-base-content">Log aktivitas Kosong</h3>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     logs.map((log, index) => (
                                         <tr key={log._id}>
                                             <td className="font-mono text-sm text-gray-500">
-                                                {logs.length - index}
+                                                {totalLogsCount - ((currentPage - 1) * 50) - index}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">

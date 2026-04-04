@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { File, FileText, Image, Video, HardDrive, Package, Edit, Trash2, X, FilePenLine } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { deleteAsset, downloadFileBlob } from "@/controller/file.controller";
 
 export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, onDelete, onUpdateRequest }) {
@@ -72,7 +73,7 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
         } catch (error) {
             if (!axios.isCancel(error)) { 
                 console.error('Download error:', error); 
-                alert('Gagal mendownload file'); 
+                toast.error('Gagal mendownload file'); 
             }
         } finally { 
             setIsDownloading(false); 
@@ -102,10 +103,10 @@ export default function FileCard({ asset, sendToParent, onDetailClick, onEdit, o
         
         try { 
             await deleteAsset(asset._id); 
-            alert('Terhapus!'); 
+            toast.success('Terhapus!'); 
             if (onDelete) onDelete(asset._id); 
         } catch (error) { 
-            alert('Gagal hapus'); 
+            toast.error('Gagal hapus'); 
         } 
     };
 

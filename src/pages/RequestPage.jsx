@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { fetchRequests, approveRequest, rejectRequest, clearRequests } from "@/controller/file.controller";
+import { approveRequest, rejectRequest, clearRequests } from "@/controller/file.controller";
 import { CheckCircle, XCircle, FileText, Upload, AlertCircle, Eye, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -36,7 +37,7 @@ export default function RequestPage() {
 
         } catch (error) {
             console.error('Error fetching requests:', error);
-            alert('Gagal memuat data permintaan');
+            toast.error('Gagal memuat data permintaan');
         } finally {
             setLoading(false);
         }
@@ -56,13 +57,13 @@ export default function RequestPage() {
 
         try {
             await approveRequest(id);
-            alert('Permintaan berhasil disetujui!');
+            toast.success('Permintaan berhasil disetujui!');
             loadRequests();
             // Trigger sidebar refresh by dispatching custom event
             window.dispatchEvent(new Event('refreshSidebarBadges'));
         } catch (error) {
             console.error('Error approving request:', error);
-            alert('Gagal menyetujui permintaan');
+            toast.error('Gagal menyetujui permintaan');
         }
     };
 
@@ -71,13 +72,13 @@ export default function RequestPage() {
 
         try {
             await rejectRequest(id);
-            alert('Permintaan berhasil ditolak!');
+            toast.success('Permintaan berhasil ditolak!');
             loadRequests();
             // Trigger sidebar refresh by dispatching custom event
             window.dispatchEvent(new Event('refreshSidebarBadges'));
         } catch (error) {
             console.error('Error rejecting request:', error);
-            alert('Gagal menolak permintaan');
+            toast.error('Gagal menolak permintaan');
         }
     };
 
@@ -86,13 +87,13 @@ export default function RequestPage() {
 
         try {
             await clearRequests();
-            alert('Semua permintaan berhasil dihapus!');
+            toast.success('Semua permintaan berhasil dihapus!');
             loadRequests();
             // Trigger sidebar refresh
             window.dispatchEvent(new Event('refreshSidebarBadges'));
         } catch (error) {
             console.error('Error clearing requests:', error);
-            alert('Gagal menghapus semua permintaan');
+            toast.error('Gagal menghapus semua permintaan');
         }
     };
 
@@ -161,16 +162,20 @@ export default function RequestPage() {
                 </div>
 
             {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <span className="loading loading-spinner loading-lg"></span>
+                <div className="flex flex-col gap-4 w-full mt-4">
+                    <div className="skeleton h-24 w-full"></div>
+                    <div className="skeleton h-24 w-full"></div>
+                    <div className="skeleton h-24 w-full"></div>
                 </div>
             ) : (
                 <>
                     {/* Mobile: Card View */}
                     <div className="md:hidden space-y-3">
                         {requests.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                Tidak ada permintaan
+                            <div className="flex flex-col items-center justify-center py-12 text-gray-400 bg-base-100 rounded-box shadow-sm">
+                                <FileText size={48} className="mb-2 opacity-50" />
+                                <h3 className="text-lg font-bold text-base-content">Data permintaan Kosong</h3>
+                                <p className="text-xs">Belum ada data permintaan untuk ditampilkan.</p>
                             </div>
                         ) : (
                             requests.map((request) => (
@@ -264,8 +269,11 @@ export default function RequestPage() {
                             <tbody>
                                 {requests.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="text-center py-8 text-gray-500">
-                                            Tidak ada permintaan
+                                        <td colSpan="7" className="text-center py-12 text-gray-400">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <FileText size={48} className="mb-2 opacity-50" />
+                                                <h3 className="text-lg font-bold text-base-content">Data permintaan Kosong</h3>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
