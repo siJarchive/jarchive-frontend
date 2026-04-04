@@ -8,15 +8,28 @@ export default function LogPage() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalLogsCount, setTotalLogsCount] = useState(0);
+    const [actionCounts, setActionCounts] = useState({});
 
     const token = localStorage.getItem('token');
 
-    const loadLogs = async () => {
+const loadLogs = async (page = 1, currentFilter = 'all') => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_URL}/api/logs`);
-            setLogs(res.data);
-            console.log(res);
+            const res = await axios.get(`${API_URL}/api/logs`, {
+                params: { page: page, limit: 50, action: currentFilter }
+            });
+            setLogs(res.data.logs);
+            setCurrentPage(res.data.currentPage);
+            setTotalPages(res.data.totalPages);
+            setTotalLogsCount(res.data.totalLogs);
+
+            const statsRes = await axios.get(`${API_URL}/api/logs/stats`);
+            setActionCounts(statsRes.data);
+
         } catch (error) {
             console.error('Error fetching logs:', error);
             alert('Gagal memuat data log');
@@ -44,8 +57,13 @@ export default function LogPage() {
     };
 
     useEffect(() => {
-        loadLogs();
-    }, []);
+        loadLogs(currentPage, filter);
+    }, [currentPage, filter]);
+
+    const handleFilterChange = (newFilter) => {
+        setFilter(newFilter);
+        setCurrentPage(1);
+    };
 
     const getActionIcon = (action) => {
         switch (action) {
@@ -86,15 +104,6 @@ export default function LogPage() {
         });
     };
 
-    const filteredLogs = filter === 'all' 
-        ? logs 
-        : logs.filter(log => log.action === filter);
-
-    const actionCounts = logs.reduce((acc, log) => {
-        acc[log.action] = (acc[log.action] || 0) + 1;
-        return acc;
-    }, {});
-
     return (
         <div className="py-4 px-2 md:px-0">
             <div className="mb-4">
@@ -105,7 +114,7 @@ export default function LogPage() {
                     <div className="stats shadow bg-base-100">
                         <div className="stat p-3 md:p-4">
                             <div className="stat-title text-xs md:text-sm">Total</div>
-                            <div className="stat-value text-xl md:text-2xl text-primary">{logs.length}</div>
+                            <div className="stat-value text-xl md:text-2xl text-primary">{totalLogsCount}</div>
                         </div>
                     </div>
                     <div className="stats shadow bg-base-100">
@@ -141,7 +150,7 @@ export default function LogPage() {
                         <select 
                             className="select select-bordered w-full"
                             value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
+                            onChange={(e) => handleFilterChange(e.target.value)}
                         >
                             <option value="all">Semua</option>
                             <option value="upload">Upload</option>
@@ -155,31 +164,31 @@ export default function LogPage() {
                     <div className="hidden md:flex gap-2 flex-wrap">
                         <button 
                             className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
-                            onClick={() => setFilter('all')}
+                            onClick={() => handleFilterChange('all')}
                         >
                             Semua
                         </button>
                         <button 
                             className={`btn btn-sm ${filter === 'upload' ? 'btn-success' : 'btn-ghost'}`}
-                            onClick={() => setFilter('upload')}
+                            onClick={() => handleFilterChange('upload')}
                         >
                             Upload
                         </button>
                         <button 
                             className={`btn btn-sm ${filter === 'download' ? 'btn-info' : 'btn-ghost'}`}
-                            onClick={() => setFilter('download')}
+                            onClick={() => handleFilterChange('download')}
                         >
                             Download
                         </button>
                         <button 
                             className={`btn btn-sm ${filter === 'delete' ? 'btn-error' : 'btn-ghost'}`}
-                            onClick={() => setFilter('delete')}
+                            onClick={() => handleFilterChange('delete')}
                         >
                             Delete
                         </button>
                         <button 
                             className={`btn btn-sm ${filter === 'approve' ? 'btn-success' : 'btn-ghost'}`}
-                            onClick={() => setFilter('approve')}
+                            onClick={() => handleFilterChange('approve')}
                         >
                             Approve
                         </button>
@@ -212,7 +221,7 @@ export default function LogPage() {
                 <>
                     {/* Mobile: Card View */}
                     <div className="md:hidden space-y-2">
-                        {filteredLogs.length === 0 ? (
+                        {logs.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 {filter === 'all' 
                                     ? 'Tidak ada log aktivitas'
@@ -220,7 +229,7 @@ export default function LogPage() {
                                 }
                             </div>
                         ) : (
-                            filteredLogs.map((log, index) => (
+                            logs.map((log, index) => (
                                 <div key={log._id} className="card bg-base-100 shadow-sm">
                                     <div className="card-body p-4">
                                         <div className="flex justify-between items-start mb-2">
@@ -231,7 +240,7 @@ export default function LogPage() {
                                                 </span>
                                             </div>
                                             <span className="text-xs text-gray-500">
-                                                #{filteredLogs.length - index}
+                                                #{totalLogsCount - ((currentPage - 1) * 50) - index}
                                             </span>
                                         </div>
                                         <p className="text-sm">{log.detail}</p>
@@ -256,7 +265,7 @@ export default function LogPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredLogs.length === 0 ? (
+                                {logs.length === 0 ? (
                                     <tr>
                                         <td colSpan="4" className="text-center py-8 text-gray-500">
                                             {filter === 'all' 
@@ -266,10 +275,10 @@ export default function LogPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredLogs.map((log, index) => (
+                                    logs.map((log, index) => (
                                         <tr key={log._id}>
                                             <td className="font-mono text-sm text-gray-500">
-                                                {filteredLogs.length - index}
+                                                {logs.length - index}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
@@ -296,10 +305,31 @@ export default function LogPage() {
                 </>
             )}
 
-            {/* Pagination Info */}
-            {filteredLogs.length > 0 && (
-                <div className="mt-4 text-center text-sm text-gray-500">
-                    Menampilkan {filteredLogs.length} dari {logs.length} log
+            {/* Pagination Controls */}
+            {logs.length > 0 && (
+                <div className="flex flex-col items-center mt-6 mb-4">
+                    <div className="join">
+                        <button 
+                            className="join-item btn btn-sm"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        >
+                            «
+                        </button>
+                        <button className="join-item btn btn-sm pointer-events-none">
+                            Page {currentPage} of {totalPages}
+                        </button>
+                        <button 
+                            className="join-item btn btn-sm"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        >
+                            »
+                        </button>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                        Total Records: {totalLogsCount}
+                    </div>
                 </div>
             )}
         </div>
