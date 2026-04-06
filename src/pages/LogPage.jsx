@@ -109,12 +109,12 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
     };
 
     return (
-        <div className="py-4 px-2 md:px-0">
+        <div className="py-4 md:px-0">
             <div className="mb-4">
                 <h1 className="text-2xl md:text-3xl font-bold mb-4">Log Aktivitas</h1>
                 
                 {/* Statistics Cards - Mobile Responsive */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-4">
                     <div className="stats shadow bg-base-100">
                         <div className="stat p-3 md:p-4">
                             <div className="stat-title text-xs md:text-sm">Total</div>
@@ -145,6 +145,12 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                             <div className="stat-value text-xl md:text-2xl text-success">{actionCounts.approve || 0}</div>
                         </div>
                     </div>
+                    <div className="stats shadow bg-base-100">
+                        <div className="stat p-3 md:p-4">
+                            <div className="stat-title text-xs md:text-sm">Update</div>
+                            <div className="stat-value text-xl md:text-2xl text-warning">{actionCounts.update || 0}</div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Filter & Actions - Mobile Responsive */}
@@ -161,6 +167,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                             <option value="download">Download</option>
                             <option value="delete">Delete</option>
                             <option value="approve">Approve</option>
+                            <option value="update">Update</option>
                         </select>
                     </div>
 
