@@ -21,7 +21,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
         try {
             setLoading(true);
             const res = await axios.get(`${API_URL}/api/logs`, {
-                params: { page: page, limit: 50, action: currentFilter }
+                params: { page: page, limit: 20, action: currentFilter }
             });
             setLogs(res.data.logs);
             setCurrentPage(res.data.currentPage);
@@ -258,7 +258,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                                                 </span>
                                             </div>
                                             <span className="text-xs text-gray-500">
-                                                #{totalLogsCount - ((currentPage - 1) * 50) - index}
+                                                #{totalLogsCount - ((currentPage - 1) * 20) - index}
                                             </span>
                                         </div>
                                         <p className="text-sm">{log.detail}</p>
@@ -296,7 +296,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                                     logs.map((log, index) => (
                                         <tr key={log._id}>
                                             <td className="font-mono text-sm text-gray-500">
-                                                {totalLogsCount - ((currentPage - 1) * 50) - index}
+                                                {totalLogsCount - ((currentPage - 1) * 20) - index}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
