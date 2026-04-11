@@ -257,10 +257,10 @@ export default function RequestPage() {
                         <table className="table table-zebra">
                             <thead>
                                 <tr>
+                                    <th>No</th>
                                     <th>Tipe</th>
                                     <th>Nama File</th>
                                     <th>Kategori</th>
-                                    <th>Pesan</th>
                                     <th>Tanggal</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
@@ -277,8 +277,9 @@ export default function RequestPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    requests.map((request) => (
+                                    requests.map((request, index) => (
                                         <tr key={request._id}>
+                                            <td>{totalRequestsCount - ((currentPage - 1) * 20) - index}</td>
                                             <td>
                                                 <div className="flex items-center gap-2">
                                                     {getTypeIcon(request.type)}
@@ -299,11 +300,6 @@ export default function RequestPage() {
                                                 <span className="badge badge-sm badge-outline">
                                                     {request.tempCategory || request.targetAssetId?.category || '-'}
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <div className="max-w-xs truncate" title={request.studentMessage}>
-                                                    {request.studentMessage || '-'}
-                                                </div>
                                             </td>
                                             <td className="text-sm">
                                                 {formatDate(request.date)}
@@ -404,7 +400,7 @@ export default function RequestPage() {
                             </div>
                             <div>
                                 <label className="font-semibold text-sm">Pesan Siswa:</label>
-                                <p>{selectedRequest.studentMessage || '-'}</p>
+                                <p className="whitespace-pre-wrap break-all text-sm">{selectedRequest.studentMessage || '-'}</p>
                             </div>
                             {selectedRequest.tempSize && (
                                 <div>
