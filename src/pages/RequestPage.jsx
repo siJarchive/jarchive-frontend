@@ -118,7 +118,8 @@ export default function RequestPage() {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            second: '2-digit'
         });
     };
 
@@ -261,7 +262,7 @@ export default function RequestPage() {
                                     <th>Tipe</th>
                                     <th>Nama File</th>
                                     <th>Kategori</th>
-                                    <th>Tanggal</th>
+                                    <th>Waktu</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -409,7 +410,7 @@ export default function RequestPage() {
                                 </div>
                             )}
                             <div>
-                                <label className="font-semibold text-sm">Tanggal:</label>
+                                <label className="font-semibold text-sm">Waktu:</label>
                                 <p>{formatDate(selectedRequest.date)}</p>
                             </div>
                         </div>
