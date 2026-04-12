@@ -222,6 +222,7 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                         <button 
                             className="btn btn-error btn-sm flex-1 md:flex-none gap-1"
                             onClick={handleClearLogs}
+                            disabled={logs.length === 0 || loading}
                         >
                             <Trash2 size={16} className="hidden md:inline" />
                             <span className="md:inline">Hapus Semua</span>
