@@ -125,10 +125,32 @@ export default function RequestPage() {
 
     return (
             <div className="py-4 px-2 md:px-0">
-                {/* Header & Tombol Aksi Utama */}
-                <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                    <h1 className="text-2xl md:text-3xl font-bold">Kelola Permintaan</h1>
-                    <div className="flex gap-2 w-full md:w-auto">
+                {/* Header */}
+                <div className="mb-4">
+                    <h1 className="text-2xl md:text-3xl font-bold mb-4">Kelola Permintaan</h1>
+                </div>
+
+                {/* Stats Card */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4">
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Total</div><div className="stat-value text-xl text-primary">{totalRequestsCount}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Pending</div><div className="stat-value text-xl text-warning">{requestStats.pending || 0}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Approved</div><div className="stat-value text-xl text-success">{requestStats.approved || 0}</div></div></div>
+                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Rejected</div><div className="stat-value text-xl text-error">{requestStats.rejected || 0}</div></div></div>
+                </div>
+
+                {/* Filter & Actions */}
+                <div className="flex flex-col md:flex-row gap-2 justify-between items-stretch md:items-center mb-4">
+                    
+                    {/* Filter Buttons */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+                        <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => handleFilterChange('all')}>Semua</button>
+                        <button className={`btn btn-sm ${filter === 'pending' ? 'btn-warning' : 'btn-ghost'}`} onClick={() => handleFilterChange('pending')}>Pending</button>
+                        <button className={`btn btn-sm ${filter === 'approved' ? 'btn-success' : 'btn-ghost'}`} onClick={() => handleFilterChange('approved')}>Approved</button>
+                        <button className={`btn btn-sm ${filter === 'rejected' ? 'btn-error' : 'btn-ghost'}`} onClick={() => handleFilterChange('rejected')}>Rejected</button>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
                         <button 
                             className="btn btn-primary btn-sm flex-1 md:flex-none"
                             onClick={() => loadRequests(currentPage, filter)}
@@ -144,22 +166,7 @@ export default function RequestPage() {
                             <span className="md:inline">Hapus Semua</span>
                         </button>
                     </div>
-                </div>
-
-                {/* Stats Card */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4">
-                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Total</div><div className="stat-value text-xl text-primary">{totalRequestsCount}</div></div></div>
-                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Pending</div><div className="stat-value text-xl text-warning">{requestStats.pending || 0}</div></div></div>
-                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Approved</div><div className="stat-value text-xl text-success">{requestStats.approved || 0}</div></div></div>
-                    <div className="stats shadow bg-base-100"><div className="stat p-3 md:p-4"><div className="stat-title text-xs">Rejected</div><div className="stat-value text-xl text-error">{requestStats.rejected || 0}</div></div></div>
-                </div>
-
-                {/* Filter Buttons */}
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                    <button className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => handleFilterChange('all')}>Semua</button>
-                    <button className={`btn btn-sm ${filter === 'pending' ? 'btn-warning' : 'btn-ghost'}`} onClick={() => handleFilterChange('pending')}>Pending</button>
-                    <button className={`btn btn-sm ${filter === 'approved' ? 'btn-success' : 'btn-ghost'}`} onClick={() => handleFilterChange('approved')}>Approved</button>
-                    <button className={`btn btn-sm ${filter === 'rejected' ? 'btn-error' : 'btn-ghost'}`} onClick={() => handleFilterChange('rejected')}>Rejected</button>
+                    
                 </div>
 
             {loading ? (
@@ -179,7 +186,7 @@ export default function RequestPage() {
                                 <p className="text-xs">Belum ada data permintaan untuk ditampilkan.</p>
                             </div>
                         ) : (
-                            requests.map((request) => (
+                            requests.map((request, index) => (
                                 <div key={request._id} className="card bg-base-100 shadow-sm">
                                     <div className="card-body p-4">
                                         {/* Header */}
@@ -187,9 +194,12 @@ export default function RequestPage() {
                                             <div className="flex items-center gap-2">
                                                 {getTypeIcon(request.type)}
                                                 <span className="font-semibold capitalize">{request.type}</span>
+                                                <span className={`badge badge-sm ${getStatusBadge(request.status)}`}>
+                                                    {request.status}
+                                                </span>
                                             </div>
-                                            <span className={`badge badge-sm ${getStatusBadge(request.status)}`}>
-                                                {request.status}
+                                            <span className="text-xs text-gray-500 font-mono">
+                                                #{totalRequestsCount - ((currentPage - 1) * 20) - index}
                                             </span>
                                         </div>
 
@@ -204,13 +214,6 @@ export default function RequestPage() {
                                                     {request.tempSize && ` • ${request.tempSize}`}
                                                 </p>
                                             </div>
-                                            
-                                            {request.studentMessage && (
-                                                <p className="text-gray-600 text-xs line-clamp-2">
-                                                    {request.studentMessage}
-                                                </p>
-                                            )}
-
                                             <p className="text-xs text-gray-500">
                                                 {formatDate(request.date)}
                                             </p>
@@ -258,7 +261,7 @@ export default function RequestPage() {
                         <table className="table table-zebra">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th className="w-12">#</th>
                                     <th>Tipe</th>
                                     <th>Nama File</th>
                                     <th>Kategori</th>
@@ -280,7 +283,9 @@ export default function RequestPage() {
                                 ) : (
                                     requests.map((request, index) => (
                                         <tr key={request._id}>
-                                            <td>{totalRequestsCount - ((currentPage - 1) * 20) - index}</td>
+                                            <td className="font-mono text-sm text-gray-500">
+                                                {totalRequestsCount - ((currentPage - 1) * 20) - index}
+                                            </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
                                                     {getTypeIcon(request.type)}
@@ -362,8 +367,21 @@ export default function RequestPage() {
             {requests.length > 0 && (
                 <div className="flex flex-col items-center mt-6 mb-4">
                     <div className="join">
-                        <button className="join-item btn btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>«</button>
-                        <button className="join-item btn btn-sm pointer-events-none">Page {currentPage} of {totalPages}</button>
+                        <button className="join-item btn btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>«
+                        </button>
+                        <select 
+                            className="join-item btn btn-sm appearance-none bg-base-200 text-center cursor-pointer font-semibold" 
+                            value={currentPage} 
+                            onChange={(e) => setCurrentPage(Number(e.target.value))}
+                            title="Pilih Halaman"
+                        >
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <option key={page} value={page}>
+                                    Page {page} of {totalPages}
+                                </option>
+                            ))}
+                        </select>
+
                         <button className="join-item btn btn-sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>»</button>
                     </div>
                 </div>

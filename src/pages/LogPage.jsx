@@ -334,9 +334,20 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                         >
                             «
                         </button>
-                        <button className="join-item btn btn-sm pointer-events-none">
-                            Page {currentPage} of {totalPages}
-                        </button>
+                        
+                        <select 
+                            className="join-item btn btn-sm appearance-none bg-base-200 text-center cursor-pointer font-semibold" 
+                            value={currentPage} 
+                            onChange={(e) => setCurrentPage(Number(e.target.value))}
+                            title="Pilih Halaman"
+                        >
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <option key={page} value={page}>
+                                    Page {page} of {totalPages}
+                                </option>
+                            ))}
+                        </select>
+
                         <button 
                             className="join-item btn btn-sm"
                             disabled={currentPage === totalPages}
@@ -344,9 +355,6 @@ const loadLogs = async (page = 1, currentFilter = 'all') => {
                         >
                             »
                         </button>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2">
-                        Total Records: {totalLogsCount}
                     </div>
                 </div>
             )}
