@@ -1,4 +1,4 @@
-# Dokumentasi Frontend JArchive
+# Dokumentasi Frontend Jarchive
 
 Frontend JArchive adalah antarmuka pengguna berbasis web untuk platform repositori lokal. Aplikasi ini dibangun dengan React.js dan Vite, dirancang secara responsif menggunakan TailwindCSS serta pustaka komponen daisyUI.
 
