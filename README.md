@@ -30,21 +30,21 @@ Antarmuka beroperasi sepenuhnya di sisi klien (Client-Side Rendering) dan berkom
 |                    Browser Klien                      |
 |                                                       |
 |   +---------------+      +------------------------+   |
-|   | Pages & Layout| ---> | Components (UI Elements|   |
+|   |Pages & Layout | ---> |Components (UI Elements)|   |
 |   +---------------+      +------------------------+   |
 |           |                          |                |
 |           v                          v                |
 |   +-----------------------------------------------+   |
-|   |          Controllers (Axios Instances)        |   |
+|   |         Controllers (Axios Instances)         |   |
 |   +-----------------------------------------------+   |
 +-------------------------------------------------------+
                                 |
-                         HTTP Requests
+                          HTTP Requests
                                 |
                                 v
                     +-----------------------+
-                    |  Backend API Server   |
-                    |    (VITE_API_URL)     |
+                    |   Backend API Server  |
+                    |     (VITE_API_URL)    |
                     +-----------------------+
 
 ```
