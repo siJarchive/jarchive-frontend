@@ -2,28 +2,54 @@
   <h1>Jarchive Frontend</h1>
   <p>Antarmuka pengguna berbasis web untuk platform repositori lokal Jarchive menggunakan React dan Vite.</p>
   <p>
-    <a href="https://github.com/siJarchive/jarchive-infrastructure">Infrastructure</a> | 
+    <a href="https://github.com/siJarchive/jarchive-infrastructure">Infrastructure</a> |
     <a href="https://github.com/siJarchive/jarchive-backend">Backend</a>
   </p>
 </div>
 
-![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?logo=tailwind-css&logoColor=white)
-![daisyUI](https://img.shields.io/badge/daisyUI-4.x-563D7C?logo=daisyui&logoColor=white)
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19.x-61DAFB?logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/Vite-7.x-646CFF?logo=vite&logoColor=white" alt="Vite">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/daisyUI-5.x-563D7C?logo=daisyui&logoColor=white" alt="daisyUI">
+</p>
+
+---
+
+Frontend Jarchive adalah antarmuka pengguna berbasis web untuk platform repositori lokal Jarchive. Dibangun dengan React dan Vite, beroperasi sepenuhnya di sisi klien (client-side rendering) dan berkomunikasi ke backend melalui REST API.
+
+## Daftar Isi
+
+- [Fitur](#fitur)
+- [Konsep dan Arsitektur](#konsep-dan-arsitektur)
+- [Struktur Repository](#struktur-repository)
+- [Dependensi Utama](#dependensi-utama)
+- [Prasyarat](#prasyarat)
+- [Instalasi](#instalasi)
+- [Konfigurasi Environment](#konfigurasi-environment)
+- [Deployment](#deployment)
+- [Manajemen dan Operasional](#manajemen-dan-operasional)
+- [Keamanan](#keamanan)
+- [Lisensi](#lisensi)
+
+---
 
 ## Fitur
 
 | Fitur | Deskripsi |
 | --- | --- |
 | Responsive Dashboard | Panel navigasi dinamis untuk memantau aset, permintaan, dan log sistem. |
-| Role-Based Authorization | Pembatasan akses antarmuka (Guru/Siswa) menggunakan dekripsi token JWT sisi klien. |
+| Role-Based Authorization | Pembatasan tampilan antarmuka (Guru/Siswa) menggunakan dekripsi token JWT sisi klien melalui `jwt-decode`. Bersifat kosmetik di frontend; lihat bagian Keamanan. |
 | Asynchronous Data Fetching | Manajemen request HTTP ke REST API backend menggunakan klien Axios terpusat. |
 | Stream and Download Interface | Pemutar media bawaan untuk file video serta interaksi unduhan aset sekali klik. |
+| Client-side Routing | Navigasi antar halaman (`/`, `/login`, `/dashboard`, `/admin/logs`, `/admin/requests`) menggunakan React Router (`BrowserRouter`). |
+| Notifikasi Toast | Notifikasi aksi pengguna menggunakan `react-hot-toast`. |
+
+---
 
 ## Konsep dan Arsitektur
 
-Antarmuka beroperasi sepenuhnya di sisi klien (Client-Side Rendering) dan berkomunikasi secara eksternal ke backend API melalui lapisan controller Axios.
+Antarmuka beroperasi sepenuhnya di sisi klien dan berkomunikasi secara eksternal ke backend API melalui lapisan controller Axios.
 
 ```text
 +-------------------------------------------------------+
@@ -46,84 +72,138 @@ Antarmuka beroperasi sepenuhnya di sisi klien (Client-Side Rendering) dan berkom
                     |   Backend API Server  |
                     |     (VITE_API_URL)    |
                     +-----------------------+
+```
+
+---
+
+## Struktur Repository
 
 ```
+jarchive-frontend/
+├── index.html
+├── vite.config.js          Alias '@' -> /src; plugin Tailwind v4; dev server host 0.0.0.0.
+├── eslint.config.js
+├── Dockerfile               Multi-stage: node:20-bookworm (build) -> nginx:alpine (serve).
+├── public/
+│   ├── vite.svg
+│   └── robots.txt
+├── src/
+│   ├── main.jsx              Entry point React (StrictMode).
+│   ├── App.jsx                Definisi BrowserRouter dan seluruh Route.
+│   ├── index.css
+│   ├── assets/                 Gambar statis (logo, ilustrasi, screenshot).
+│   ├── components/             Header, Sidebar, FileCard, FileCardExample.
+│   ├── controller/             file.controller.js, user.controller.js (Axios).
+│   ├── layouts/                 HomeLayouts, MainLayouts.
+│   └── pages/                  HomePage, Dashboard, Login, LogPage, RequestPage.
+├── .env.example
+├── .gitignore
+├── package.json / package-lock.json
+└── README.md
+```
+
+---
+
+## Dependensi Utama
+
+Berdasarkan `package.json`:
+
+| Dependensi | Versi | Keterangan |
+| --- | --- | --- |
+| React & React DOM | ^19.2 | Inti pustaka perenderan antarmuka. |
+| Vite | ^7.2 (devDependency) | Build tool / dev server. |
+| Tailwind CSS + `@tailwindcss/vite` | ^4.1 | Utilitas styling, terpasang sebagai plugin Vite native (bukan PostCSS). |
+| daisyUI | ^5.5 | Plugin komponen UI berbasis Tailwind. |
+| Axios | ^1.13 | Klien HTTP berorientasi Promise. |
+| jwt-decode | ^4.0 | Ekstraksi payload JWT tanpa verifikasi signature, untuk kebutuhan tampilan berbasis peran. |
+| React Router DOM | ^7.12 | Routing client-side (`BrowserRouter`). |
+| React Hot Toast | ^2.6 | Notifikasi toast. |
+| Lucide React | ^0.562 | Set ikon vektor. |
+
+---
 
 ## Prasyarat
 
 | Komponen | Spesifikasi / Versi | Keterangan |
 | --- | --- | --- |
-| Node.js | >= 18.x | Lingkungan runtime untuk kompilasi dan bundler |
-| npm | >= 9.x | Manajemen paket dependensi pustaka |
-| Nginx | Versi Alpine Terkini | Diperlukan jika melakukan deployment container manual |
+| Node.js | >= 18.x | Lingkungan runtime untuk kompilasi dan bundler. Dockerfile resmi menggunakan image `node:20-bookworm`. |
+| npm | >= 9.x | Manajemen paket dependensi pustaka. |
+| Nginx | Alpine | Digunakan pada stage kedua Dockerfile untuk menyajikan hasil build. |
+
+---
 
 ## Instalasi
 
-1. Kloning repositori frontend dan masuk ke direktori kerja:
-
 ```bash
-git clone [https://github.com/siJarchive/jarchive-frontend.git](https://github.com/siJarchive/jarchive-frontend.git)
+git clone https://github.com/siJarchive/jarchive-frontend.git
 cd jarchive-frontend
-
-```
-
-2. Pasang seluruh dependensi proyek:
-
-```bash
 npm install
-
 ```
 
-## Konfigurasi
+---
 
-Buat berkas `.env` pada root direktori proyek dengan menyalin contoh yang tersedia:
+## Konfigurasi Environment
 
 ```bash
 cp .env.example .env
-
 ```
 
-| Variabel Lingkungan | Status | Default | Deskripsi |
+| Variabel Lingkungan | Wajib | Default | Deskripsi |
 | --- | --- | --- | --- |
-| `VITE_API_URL` | Wajib | - | Endpoint URL absolut REST API backend (contoh: `http://192.168.1.10:5000`). Gunakan IP statis/domain, bukan localhost untuk akses jaringan lokal. |
+| `VITE_API_URL` | Ya | tidak ada | Endpoint absolut REST API backend, contoh `http://192.168.1.10:5000`. Gunakan IP statis/domain, bukan localhost, untuk akses jaringan lokal. |
 
-## Struktur Direktori
+Catatan: nilai `VITE_API_URL` dibakukan ke dalam bundle statis pada saat proses build (baik `npm run build` maupun `docker build --build-arg`). Mengubah `.env` setelah build tidak memengaruhi hasil build yang sudah ada; diperlukan build ulang.
 
-| Direktori/File | Fungsi |
-| --- | --- |
-| `src/assets/` | Penyimpanan berkas statis lokal seperti gambar latar belakang, logo instansi, dan ikon SVG. |
-| `src/components/` | Komponen UI modular yang dapat digunakan kembali (contoh: `Header`, `Sidebar`, `FileCard`). |
-| `src/controller/` | Modul komunikasi HTTP berbasis Axios (`file.controller.js` dan `user.controller.js`). |
-| `src/layouts/` | Struktur template tata letak halaman untuk menjaga konsistensi komponen navigasi. |
-| `src/pages/` | Komponen utama tingkat halaman (Dashboard, Login, Halaman Log, Halaman Permintaan). |
-| `src/index.css` | Berkas konfigurasi utama untuk injeksi utilitas Tailwind CSS. |
-| `vite.config.js` | Berkas konfigurasi mesin pemaket Vite dan pemetaan alias direktori. |
+---
 
-## Manajemen dan Operasional
+## Deployment
 
-### Lingkungan Pengembangan (Development)
-
-Menjalankan server lokal untuk kebutuhan modifikasi kode dengan fitur Hot Module Replacement (HMR):
+### Development
 
 ```bash
 npm run dev
-
 ```
 
-### Lingkungan Produksi Terisolasi (Docker Standalone)
+Dev server Vite dikonfigurasi mendengarkan `0.0.0.0`, sehingga dapat diakses dari perangkat lain pada jaringan lokal yang sama.
 
-Proyek ini mendukung *multi-stage build*. Tahap pertama melakukan kompilasi aset statis melalui Node.js, dan tahap kedua memuat hasil kompilasi ke dalam server web Nginx.
+### Docker Standalone (Production)
 
-1. Build image dengan menyuntikkan argumen URL API target:
-
-```bash
-docker build --build-arg VITE_API_URL=[http://192.168.1.10:5000](http://192.168.1.10:5000) -t jarchive-frontend .
-
-```
-
-2. Jalankan container secara terisolasi pada port host yang diinginkan:
+Multi-stage build: Node.js mengompilasi aset statis pada stage pertama, Nginx menyajikan hasilnya pada stage kedua.
 
 ```bash
+docker build --build-arg VITE_API_URL=http://192.168.1.10:5000 -t jarchive-frontend .
 docker run -d -p 11223:80 --name jarchive-frontend jarchive-frontend
-
 ```
+
+Konfigurasi Nginx (`default.conf`) digenerate langsung oleh Dockerfile dengan arahan `try_files $uri $uri/ /index.html` agar mendukung client-side routing dari React Router. Tanpa konfigurasi ini, refresh pada rute seperti `/dashboard` akan menghasilkan 404 dari Nginx.
+
+Penggunaan paling efisien adalah melalui Docker Compose pada repository `jarchive-infrastructure`.
+
+---
+
+## Manajemen dan Operasional
+
+Build manual aset produksi tanpa container:
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## Keamanan
+
+`jwt-decode` hanya mendekode payload token tanpa memverifikasi signature. Pembatasan tampilan berbasis peran (Guru/Siswa) di frontend bersifat kosmetik, bukan kontrol keamanan. Kontrol akses sesungguhnya harus diterapkan di sisi backend; pada kondisi backend saat ini, validasi tersebut belum diterapkan (lihat README `jarchive-backend`, bagian Keamanan).
+
+---
+
+## Lisensi
+
+Tidak ditemukan berkas `LICENSE` maupun field `license` pada `package.json`. Status lisensi repository ini belum dideklarasikan secara resmi.
+
+---
+
+<div align="center">
+  <sub>Jarchive Frontend &nbsp;|&nbsp; <a href="https://github.com/siJarchive/jarchive-infrastructure">Infrastructure</a> &nbsp;|&nbsp; <a href="https://github.com/siJarchive/jarchive-backend">Backend</a></sub>
+</div>
